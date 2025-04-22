@@ -131,7 +131,7 @@ SPDX-License-Identifier: curl
 
   To make a curl build actually use the test DNS server requires a debug
   build. When such a test runs, the environment variable `CURL_DNS_SERVER` is
-  set to identfy the IP address and port number of the DNS server to use.
+  set to identify the IP address and port number of the DNS server to use.
 
   - curl built to use c-ares for resolving automatically asks that server for
     host information
