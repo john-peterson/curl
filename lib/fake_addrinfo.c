@@ -153,6 +153,7 @@ int r_getaddrinfo(const char *node,
   int optmask = 0;
   struct ares_addrinfo_hints ahints;
   ares_channel channel;
+  int rc = 0;
 
   memset(&options, 0, sizeof(options));
   optmask      |= ARES_OPT_EVENT_THREAD;
@@ -170,17 +171,17 @@ int r_getaddrinfo(const char *node,
 
   status = ares_init_options(&channel, &options, optmask);
   if(status)
-    return 1; /* major problem */
+    return EAI_MEMORY; /* major problem */
 
   else {
     const char *env = getenv("CURL_DNS_SERVER");
     if(env) {
-      int rc = ares_set_servers_ports_csv(channel, env);
+      rc = ares_set_servers_ports_csv(channel, env);
       if(rc) {
         fprintf(stderr, "ares_set_servers_ports_csv failed: %d", rc);
         /* Cleanup */
         ares_destroy(channel);
-        return 1; /* we can't run */
+        return EAI_MEMORY; /* we can't run */
       }
     }
   }
@@ -197,11 +198,13 @@ int r_getaddrinfo(const char *node,
     /* free the old */
     ares_freeaddrinfo(ctx.result);
   }
+  else
+    rc = EAI_NONAME; /* got nothing */
 
   /* Cleanup */
   ares_destroy(channel);
 
-  return 0;
+  return rc;
 }
 
 #endif /* USE_FAKE_GETADDRINFO */
