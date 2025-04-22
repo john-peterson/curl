@@ -48,20 +48,17 @@ void r_freeaddrinfo(struct addrinfo *cahead)
 }
 
 struct context {
-  ares_channel channel;
   struct ares_addrinfo *result;
-  int status;
 };
 
-static void async_addrinfo_cb(void *user_data, int status, int timeouts,
+static void async_addrinfo_cb(void *userp, int status, int timeouts,
                               struct ares_addrinfo *result)
 {
-  struct context *ctx = (struct context *)user_data;
+  struct context *ctx = (struct context *)userp;
   (void)timeouts;
   if(ARES_SUCCESS == status) {
     ctx->result = result;
   }
-  ctx->status = status;
 }
 
 /* convert the c-ares version into the "native" version */
@@ -155,6 +152,7 @@ int r_getaddrinfo(const char *node,
   struct ares_options options;
   int optmask = 0;
   struct ares_addrinfo_hints ahints;
+  ares_channel channel;
 
   memset(&options, 0, sizeof(options));
   optmask      |= ARES_OPT_EVENT_THREAD;
@@ -170,24 +168,28 @@ int r_getaddrinfo(const char *node,
     ahints.ai_protocol = hints->ai_protocol;
   }
 
-  status = ares_init_options(&ctx.channel, &options, optmask);
+  status = ares_init_options(&channel, &options, optmask);
   if(status)
     return 1; /* major problem */
 
   else {
     const char *env = getenv("CURL_DNS_SERVER");
     if(env) {
-      int rc = ares_set_servers_ports_csv(ctx.channel, env);
-      if(rc)
+      int rc = ares_set_servers_ports_csv(channel, env);
+      if(rc) {
         fprintf(stderr, "ares_set_servers_ports_csv failed: %d", rc);
+        /* Cleanup */
+        ares_destroy(channel);
+        return 1; /* we can't run */
+      }
     }
   }
 
-  ares_getaddrinfo(ctx.channel, node, service, &ahints,
+  ares_getaddrinfo(channel, node, service, &ahints,
                    async_addrinfo_cb, &ctx);
 
   /* Wait until no more requests are left to be processed */
-  ares_queue_wait_empty(ctx.channel, -1);
+  ares_queue_wait_empty(channel, -1);
 
   if(ctx.result) {
     /* convert the c-ares version */
@@ -197,7 +199,7 @@ int r_getaddrinfo(const char *node,
   }
 
   /* Cleanup */
-  ares_destroy(ctx.channel);
+  ares_destroy(channel);
 
   return 0;
 }
