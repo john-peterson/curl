@@ -25,7 +25,7 @@
 #include "curl_setup.h"
 #include "fake_addrinfo.h"
 
-#if USE_FAKE_GETADDRINFO
+#ifdef USE_FAKE_GETADDRINFO
 
 #include <string.h>
 #include <stdlib.h>
