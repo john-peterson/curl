@@ -125,7 +125,7 @@ SPDX-License-Identifier: curl
 
 ### DNS server
 
-  There is a test DNS server to allow tests to resolve host names to verify
+  There is a test DNS server to allow tests to resolve hostnames to verify
   those code paths. This server is started like all the other servers within
   the `<servers>` section.
 
@@ -133,16 +133,15 @@ SPDX-License-Identifier: curl
   build. When such a test runs, the environment variable `CURL_DNS_SERVER` is
   set to identfy the IP address and port number of the DNS server to use.
 
-  - curl built to use c-ares for resolving will then automatically ask that
-    server for host information
+  - curl built to use c-ares for resolving automatically asks that server for
+    host information
 
   - curl built to use `getaddrinfo()` for resolving *and* is built with c-ares
     1.26.0 or later, gets a special work-around. In such builds, when the
-    environment variable is set, curl will instead invoke a getaddrinfo
-    wrapper that emulates the function and acknowledges the DNS server
-    environment variable. This way, the getaddrinfo-using code paths in curl
-    are verified, and yet the custom responses from the test DNS server are
-    used.
+    environment variable is set, curl instead invokes a getaddrinfo wrapper
+    that emulates the function and acknowledges the DNS server environment
+    variable. This way, the getaddrinfo-using code paths in curl are verified,
+    and yet the custom responses from the test DNS server are used.
 
   When curl ask for HTTPS-RR, c-ares is always used and in debug builds such
   asks respects the dns server environment variable as well.
