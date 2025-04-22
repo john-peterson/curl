@@ -31,6 +31,11 @@
 #include <stdlib.h>
 #include <ares.h>
 
+/* The last 3 #include files should be in this order */
+#include "curl_printf.h"
+#include "curl_memory.h"
+#include "memdebug.h"
+
 void r_freeaddrinfo(struct addrinfo *cahead)
 {
   struct addrinfo *canext;
