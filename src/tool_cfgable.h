@@ -135,12 +135,28 @@ struct OperationConfig {
   char *etag_compare_file;
   char *customrequest;
   char *ssl_ec_curves;
+  char *ssl_sig_hash_algs;
+  char *ssl_cert_compression;
   char *krblevel;
   char *request_target;
+  char *http2_pseudo_headers_order;
+  char *http2_settings;
+  long http2_window_update;
+  long http2_stream_weight;
+  long http2_stream_exclusive;
+  char *http2_streams;
+  bool tls_grease;
+  char *tls_extension_order;
+  char *tls_delegated_credentials;
+  long tls_record_size_limit;
+  long tls_key_shares_limit;
+  bool tls_use_new_alps_codepoint;
+  bool tls_use_firefox_tls13_ciphers;
   char *writeout;           /* %-styled format string to output */
   struct curl_slist *quote;
   struct curl_slist *postquote;
   struct curl_slist *prequote;
+  bool ssl_permute_extensions;
   struct curl_slist *headers;
   struct curl_slist *proxyheaders;
   struct tool_mime *mimeroot;
@@ -197,6 +213,9 @@ struct OperationConfig {
   long alivetime;           /* keepalive-time */
   long alivecnt;            /* keepalive-cnt */
   long gssapi_delegation;
+  bool alps;                      /* enable/disable TLS ALPS extension */
+  bool noticket;                  /* enable/disable TLS session ticket */
+  bool tls_signed_cert_timestamps;    /* curl-impersonate: enable extension 18 */
   long expect100timeout_ms;
   long happy_eyeballs_timeout_ms; /* happy eyeballs timeout in milliseconds.
                                      0 is valid. default: CURL_HET_DEFAULT. */

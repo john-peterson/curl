@@ -254,7 +254,8 @@ struct Curl_multi *Curl_multi_handle(size_t ev_hashsize,  /* event hash */
   Curl_llist_init(&multi->msgsent, NULL);
 
   multi->multiplexing = TRUE;
-  multi->max_concurrent_streams = 100;
+  /* curl-impersonate: Use 1000 concurrent streams like Chrome. */
+  multi->max_concurrent_streams = 1000;
   multi->last_timeout_ms = -1;
 
 #ifdef USE_WINSOCK

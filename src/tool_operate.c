@@ -1111,6 +1111,36 @@ static CURLcode config2setopts(struct GlobalConfig *global,
       errorf(global, "HTTP/0.9 is not supported in this build");
       return result;
     }
+    if(config->http2_pseudo_headers_order)
+      my_setopt_str(curl,
+                    CURLOPT_HTTP2_PSEUDO_HEADERS_ORDER,
+                    config->http2_pseudo_headers_order);
+
+    if(config->http2_settings)
+      my_setopt_str(curl,
+                    CURLOPT_HTTP2_SETTINGS,
+                    config->http2_settings);
+
+    if(config->http2_window_update)
+      my_setopt(curl,
+                CURLOPT_HTTP2_WINDOW_UPDATE,
+                config->http2_window_update);
+
+    if(config->http2_stream_exclusive)
+      my_setopt(curl,
+                CURLOPT_STREAM_EXCLUSIVE,
+                config->http2_stream_exclusive);
+
+    if(config->http2_stream_weight)
+      my_setopt(curl,
+                CURLOPT_STREAM_WEIGHT,
+                config->http2_stream_weight);
+
+    if(config->http2_streams)
+      my_setopt_str(curl,
+                    CURLOPT_HTTP2_STREAMS,
+                    config->http2_streams);
+
 
   } /* (proto_http) */
 
@@ -1262,6 +1292,14 @@ static CURLcode config2setopts(struct GlobalConfig *global,
 
   if(config->ssl_ec_curves)
     my_setopt_str(curl, CURLOPT_SSL_EC_CURVES, config->ssl_ec_curves);
+
+  if(config->ssl_sig_hash_algs)
+    my_setopt_str(curl, CURLOPT_SSL_SIG_HASH_ALGS,
+                  config->ssl_sig_hash_algs);
+
+  if(config->ssl_cert_compression)
+    my_setopt_str(curl, CURLOPT_SSL_CERT_COMPRESSION,
+                  config->ssl_cert_compression);
 
   if(config->writeout)
     my_setopt_long(curl, CURLOPT_CERTINFO, 1);
@@ -1457,10 +1495,43 @@ static CURLcode config2setopts(struct GlobalConfig *global,
   if(config->proxy_cipher13_list) {
     result = res_setopt_str(curl, CURLOPT_PROXY_TLS13_CIPHERS,
                             config->proxy_cipher13_list);
+
     if(result == CURLE_NOT_BUILT_IN)
       warnf(global, "ignoring %s, not supported by libcurl with %s",
             "--proxy-tls13-ciphers", ssl_backend());
   }
+  /* curl-impersonate */
+  if(config->ssl_permute_extensions)
+    my_setopt(curl, CURLOPT_SSL_PERMUTE_EXTENSIONS, 1L);
+
+  /* curl-impersonate */
+  if(config->tls_grease)
+    my_setopt(curl, CURLOPT_TLS_GREASE, 1L);
+
+  /* curl-impersonate */
+  if(config->tls_extension_order)
+    // printf("setting is %s\n", config->tls_extension_order);
+    my_setopt_str(curl, CURLOPT_TLS_EXTENSION_ORDER, config->tls_extension_order);
+
+  /* curl-impersonate */
+  if (config->tls_use_new_alps_codepoint)
+    my_setopt(curl, CURLOPT_TLS_USE_NEW_ALPS_CODEPOINT, 1L);
+
+  /* curl-impersonate */
+  if (config->tls_use_firefox_tls13_ciphers)
+    my_setopt(curl, CURLOPT_TLS_USE_FIREFOX_TLS13_CIPHERS, 1L);
+
+  /* curl-impersonate */
+  if(config->tls_delegated_credentials)
+    my_setopt_str(curl, CURLOPT_TLS_DELEGATED_CREDENTIALS, config->tls_delegated_credentials);
+ 
+  /* curl-impersonate */
+  if(config->tls_record_size_limit)
+    my_setopt(curl, CURLOPT_TLS_RECORD_SIZE_LIMIT, config->tls_record_size_limit);
+ 
+  /* curl-impersonate */
+  if(config->tls_key_shares_limit)
+    my_setopt(curl, CURLOPT_TLS_KEY_SHARES_LIMIT, config->tls_key_shares_limit);
 
   /* new in libcurl 7.9.2: */
   if(config->disable_epsv)
@@ -1659,6 +1730,22 @@ static CURLcode config2setopts(struct GlobalConfig *global,
   if(config->noalpn) {
     my_setopt_long(curl, CURLOPT_SSL_ENABLE_ALPN, 0);
   }
+
+  if(config->alps) {
+    my_setopt(curl, CURLOPT_SSL_ENABLE_ALPS, 1L);
+  }
+
+  if (config->noticket) {
+    my_setopt(curl, CURLOPT_SSL_ENABLE_TICKET, 0L);
+  }
+
+  // curl-impersonate
+  if(config->tls_signed_cert_timestamps) {
+    my_setopt(curl, CURLOPT_TLS_SIGNED_CERT_TIMESTAMPS, 1L);
+  }
+
+  // curl-impersonate: always enable this
+  my_setopt(curl, CURLOPT_TLS_STATUS_REQUEST, 1L);
 
   /* new in 7.40.0, abstract support added in 7.53.0 */
   if(config->unix_socket_path) {

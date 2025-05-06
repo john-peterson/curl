@@ -325,6 +325,10 @@ CURLcode Curl_close(struct Curl_easy **datap)
   Curl_safefree(data->state.aptr.proxyuser);
   Curl_safefree(data->state.aptr.proxypasswd);
 #endif
+  /* curl-impersonate: Free the list set by CURLOPT_HTTPBASEHEADER. */
+  curl_slist_free_all(data->state.base_headers);
+  /* curl-impersonate: Free the dynamic list of headers. */
+  curl_slist_free_all(data->state.merged_headers);
 
 #if !defined(CURL_DISABLE_HTTP) && !defined(CURL_DISABLE_FORM_API)
   Curl_mime_cleanpart(data->state.formp);
@@ -465,6 +469,9 @@ CURLcode Curl_init_userdefined(struct Curl_easy *data)
   set->tcp_fastopen = FALSE;
   set->tcp_nodelay = TRUE;
   set->ssl_enable_alpn = TRUE;
+  set->ssl_enable_ticket = TRUE;
+  set->tls_grease = FALSE;
+  set->tls_use_new_alps_codepoint = FALSE;
   set->expect_100_timeout = 1000L; /* Wait for a second by default. */
   set->sep_headers = TRUE; /* separated header lists by default */
   set->buffer_size = READBUFFER_SIZE;
@@ -3595,6 +3602,11 @@ static CURLcode create_conn(struct Curl_easy *data,
          (default) */
       if(data->set.ssl_enable_alpn)
         conn->bits.tls_enable_alpn = TRUE;
+
+      /* curl-impersonate: Turn on ALPS if ALPN is enabled and the bit is
+       * enabled. */
+      if(data->set.ssl_enable_alps)
+        conn->bits.tls_enable_alps = TRUE;
     }
 
     if(waitpipe)

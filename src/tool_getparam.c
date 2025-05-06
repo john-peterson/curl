@@ -90,6 +90,7 @@ static ParameterError getstrn(char **str, const char *val,
 static const struct LongShort aliases[]= {
   {"abstract-unix-socket",       ARG_FILE, ' ', C_ABSTRACT_UNIX_SOCKET},
   {"alpn",                       ARG_BOOL|ARG_NO|ARG_TLS, ' ', C_ALPN},
+  {"alps",                       ARG_BOOL, ' ', C_ALPS},  // curl-impersonate
   {"alt-svc",                    ARG_STRG, ' ', C_ALT_SVC},
   {"anyauth",                    ARG_BOOL, ' ', C_ANYAUTH},
   {"append",                     ARG_BOOL, 'a', C_APPEND},
@@ -100,6 +101,7 @@ static const struct LongShort aliases[]= {
   {"cacert",                     ARG_FILE|ARG_TLS, ' ', C_CACERT},
   {"capath",                     ARG_FILE|ARG_TLS, ' ', C_CAPATH},
   {"cert",                       ARG_FILE|ARG_TLS, 'E', C_CERT},
+  {"cert-compression",           ARG_STRG|ARG_TLS, ' ', C_CERT_COMPRESSION},  // curl-impersonate
   {"cert-status",                ARG_BOOL|ARG_TLS, ' ', C_CERT_STATUS},
   {"cert-type",                  ARG_STRG|ARG_TLS, ' ', C_CERT_TYPE},
   {"ciphers",                    ARG_STRG|ARG_TLS, ' ', C_CIPHERS},
@@ -181,6 +183,12 @@ static const struct LongShort aliases[]= {
   {"http1.1",                    ARG_NONE, ' ', C_HTTP1_1},
   {"http2",                      ARG_NONE, ' ', C_HTTP2},
   {"http2-prior-knowledge",      ARG_NONE, ' ', C_HTTP2_PRIOR_KNOWLEDGE},
+  {"http2-pseudo-headers-order", ARG_STRG, ' ', C_HTTP2_PSEUDO_HEADERS_ORDER},  // curl-impersonate
+  {"http2-settings",             ARG_STRG, ' ', C_HTTP2_SETTINGS},  // curl-impersonate
+  {"http2-stream-exclusive",     ARG_STRG, ' ', C_HTTP2_STREAM_EXCLUSIVE},  // curl-impersonate
+  {"http2-stream-weight",        ARG_STRG, ' ', C_HTTP2_STREAM_WEIGHT},  // curl-impersonate
+  {"http2-streams",              ARG_STRG, ' ', C_HTTP2_STREAMS},  // curl-impersonate
+  {"http2-window-update",        ARG_STRG, ' ', C_HTTP2_WINDOW_UPDATE},  // curl-impersonate
   {"http3",                      ARG_NONE|ARG_TLS, ' ', C_HTTP3},
   {"http3-only",                 ARG_NONE|ARG_TLS, ' ', C_HTTP3_ONLY},
   {"ignore-content-length",      ARG_BOOL, ' ', C_IGNORE_CONTENT_LENGTH},
@@ -305,6 +313,7 @@ static const struct LongShort aliases[]= {
   {"sessionid",                  ARG_BOOL|ARG_NO, ' ', C_SESSIONID},
   {"show-error",                 ARG_BOOL, 'S', C_SHOW_ERROR},
   {"show-headers",               ARG_BOOL, 'i', C_SHOW_HEADERS},
+  {"signature-hashes",           ARG_STRG, ' ', C_SIGNATURE_HASHES}, // curl-impersonate
   {"silent",                     ARG_BOOL, 's', C_SILENT},
   {"skip-existing",              ARG_BOOL, ' ', C_SKIP_EXISTING},
   {"socks4",                     ARG_STRG, ' ', C_SOCKS4},
@@ -341,8 +350,18 @@ static const struct LongShort aliases[]= {
   {"tftp-blksize",               ARG_STRG, ' ', C_TFTP_BLKSIZE},
   {"tftp-no-options",            ARG_BOOL, ' ', C_TFTP_NO_OPTIONS},
   {"time-cond",                  ARG_STRG, 'z', C_TIME_COND},
+  {"tls-delegated-credentials",  ARG_STRG, ' ', C_TLS_DELEGATED_CREDENTIALS},  // curl-impersonate
   {"tls-earlydata",              ARG_BOOL|ARG_TLS, ' ', C_TLS_EARLYDATA},
+  {"tls-extension-order",        ARG_STRG, ' ', C_TLS_EXTENSION_ORDER},  // curl-impersonate
+  {"tls-grease",                 ARG_BOOL, ' ', C_TLS_GREASE},  // curl-impersonate
+  {"tls-key-shares-limit",       ARG_STRG, ' ', C_TLS_KEY_SHARES_LIMIT},  // curl-impersonate
   {"tls-max",                    ARG_STRG|ARG_TLS, ' ', C_TLS_MAX},
+  {"tls-permute-extensions",     ARG_BOOL, ' ', C_TLS_PERMUTE_EXTENSIONS},  // curl-impersonate
+  {"tls-record-size-limit",      ARG_STRG, ' ', C_TLS_RECORD_SIZE_LIMIT},  // curl-impersonate
+  {"tls-session-ticket",         ARG_BOOL, ' ', C_TLS_SESSION_TICKET},  // curl-impersonate
+  {"tls-signed-cert-timestamps", ARG_BOOL, ' ', C_TLS_SIGNED_CERT_TIMESTAMPS}, // curl-impersonate
+  {"tls-use-firefox-tls13-ciphers", ARG_BOOL, ' ', C_TLS_USE_FIREFOX_TLS13_CIPHERS},  // curl-impersonate
+  {"tls-use-new-alps-codepoint", ARG_BOOL, ' ', C_TLS_USE_NEW_ALPS_CODEPOINT},  // curl-impersonate
   {"tls13-ciphers",              ARG_STRG|ARG_TLS, ' ', C_TLS13_CIPHERS},
   {"tlsauthtype",                ARG_STRG|ARG_TLS, ' ', C_TLSAUTHTYPE},
   {"tlspassword",                ARG_STRG|ARG_TLS, ' ', C_TLSPASSWORD},
@@ -1864,7 +1883,7 @@ ParameterError getparameter(const char *flag, /* f or -long-flag */
         /* if given a blank string, make it NULL again */
         curlx_safefree(config->doh_url);
       break;
-    case C_CIPHERS: /* -- ciphers */
+    case C_CIPHERS: /* --ciphers */
       err = getstr(&config->cipher_list, nextarg, DENY_BLANK);
       break;
     case C_DNS_INTERFACE: /* --dns-interface */
@@ -1912,6 +1931,9 @@ ParameterError getparameter(const char *flag, /* f or -long-flag */
       break;
     case C_ALPN: /* --alpn */
       config->noalpn = !toggle;
+      break;
+    case C_ALPS:  /* --alps curl-impersonate */
+      config->alps = toggle;
       break;
     case C_LIMIT_RATE: /* --limit-rate */
       err = GetSizeParameter(global, nextarg, "rate", &value);
@@ -2294,6 +2316,36 @@ ParameterError getparameter(const char *flag, /* f or -long-flag */
     case C_TLS_MAX: /* --tls-max */
       err = str2tls_max(&config->ssl_version_max, nextarg);
       break;
+    case C_TLS_SIGNED_CERT_TIMESTAMPS:
+      config->tls_signed_cert_timestamps = toggle;
+      break;
+    case C_TLS_SESSION_TICKET:  /* --tls-session-ticket curl-impersonate */
+      config->noticket = (!toggle)?TRUE:FALSE;
+      break;
+    case C_TLS_PERMUTE_EXTENSIONS:  /* --tls-permute-extensions curl-impersonate */
+      config->ssl_permute_extensions = toggle;
+      break;
+    case C_TLS_EXTENSION_ORDER:  /* --tls-extension-order curl-impersonate */
+      err = getstr(&config->tls_extension_order, nextarg, ALLOW_BLANK);
+      break;
+    case C_TLS_DELEGATED_CREDENTIALS:
+      err = getstr(&config->tls_delegated_credentials, nextarg, ALLOW_BLANK);
+      break;
+    case C_TLS_RECORD_SIZE_LIMIT:
+      err = str2unum(&config->tls_record_size_limit, nextarg);
+      break;
+    case C_TLS_KEY_SHARES_LIMIT:
+      err = str2unum(&config->tls_key_shares_limit, nextarg);
+      break;
+    case C_TLS_GREASE:  /* --tls-grease curl-impersonate */
+      config->tls_grease = toggle;
+      break;
+    case C_TLS_USE_NEW_ALPS_CODEPOINT: /* --tls-use-new-alps-codepoint curl-impersonate */
+      config->tls_use_new_alps_codepoint = toggle;
+      break;
+    case C_TLS_USE_FIREFOX_TLS13_CIPHERS: /* --tls-use-new-alps-codepoint curl-impersonate */
+      config->tls_use_firefox_tls13_ciphers = toggle;
+      break;
     case C_SUPPRESS_CONNECT_HEADERS: /* --suppress-connect-headers */
       config->suppress_connect_headers = toggle;
       break;
@@ -2342,6 +2394,39 @@ ParameterError getparameter(const char *flag, /* f or -long-flag */
       if(!feature_http2)
         return PARAM_LIBCURL_DOESNT_SUPPORT;
       sethttpver(global, config, CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE);
+      break;
+    case C_HTTP2_PSEUDO_HEADERS_ORDER: /* --http2-pseudo-headers-order curl-impersonate */
+      if(!feature_http2)
+        return PARAM_LIBCURL_DOESNT_SUPPORT;
+      err = getstr(&config->http2_pseudo_headers_order, nextarg, ALLOW_BLANK);
+      break;
+    case C_HTTP2_SETTINGS:  /* --http2-settings curl-impersonate */
+      if(!feature_http2)
+        return PARAM_LIBCURL_DOESNT_SUPPORT;
+      err = getstr(&config->http2_settings, nextarg, ALLOW_BLANK);
+      break;
+    case C_HTTP2_STREAM_EXCLUSIVE:
+      if(!feature_http2)
+        return PARAM_LIBCURL_DOESNT_SUPPORT;
+      err = str2num(&config->http2_stream_exclusive, nextarg);
+      if(config->http2_stream_exclusive < 0) return PARAM_BAD_NUMERIC;
+      break;
+    case C_HTTP2_STREAM_WEIGHT:
+      if(!feature_http2)
+        return PARAM_LIBCURL_DOESNT_SUPPORT;
+      err = str2num(&config->http2_stream_weight, nextarg);
+      if(config->http2_stream_weight < 0) return PARAM_BAD_NUMERIC;
+      break;
+    case C_HTTP2_WINDOW_UPDATE:  /* --http2-window-update curl-impersonate */
+      if(!feature_http2)
+        return PARAM_LIBCURL_DOESNT_SUPPORT;
+      err = str2num(&config->http2_window_update, nextarg);
+      if(config->http2_window_update < -1) return PARAM_BAD_NUMERIC;
+      break;
+    case C_HTTP2_STREAMS:  /* --http2-streams curl-impersonate */
+      if(!feature_http2)
+        return PARAM_LIBCURL_DOESNT_SUPPORT;
+      err = getstr(&config->http2_streams, nextarg, ALLOW_BLANK);
       break;
     case C_HTTP3: /* --http3: */
       /* Try HTTP/3, allow fallback */
@@ -2476,6 +2561,9 @@ ParameterError getparameter(const char *flag, /* f or -long-flag */
     case C_CERT: /* --cert */
       GetFileAndPassword(nextarg, &config->cert, &config->key_passwd);
       cleanarg(clearthis);
+      break;
+    case C_CERT_COMPRESSION:  /* --cert-compression curl-impersonate */
+      err = getstr(&config->ssl_cert_compression, nextarg, ALLOW_BLANK);
       break;
     case C_CACERT: /* --cacert */
       err = getstr(&config->cacert, nextarg, DENY_BLANK);
@@ -2884,6 +2972,9 @@ ParameterError getparameter(const char *flag, /* f or -long-flag */
       break;
     case C_SKIP_EXISTING: /* --skip-existing */
       config->skip_existing = toggle;
+      break;
+    case C_SIGNATURE_HASHES: /* --signature-hashes */
+      err = getstr(&config->ssl_sig_hash_algs, nextarg, ALLOW_BLANK);
       break;
     case C_SHOW_ERROR: /* --show-error */
       global->showerror = toggle;

@@ -53,6 +53,7 @@ struct dynhds {
 
 #define DYNHDS_OPT_NONE          (0)
 #define DYNHDS_OPT_LOWERCASE     (1 << 0)
+#define DYNHDS_OPT_LOWERCASE_VAL (1 << 1)
 
 /**
  * Init for use on first time or after a reset.
@@ -82,6 +83,9 @@ size_t Curl_dynhds_count(struct dynhds *dynhds);
  * This will not have an effect on already existing headers.
  */
 void Curl_dynhds_set_opts(struct dynhds *dynhds, int opts);
+// curl-impersonate
+void Curl_dynhds_set_opt(struct dynhds *dynhds, int opt);
+void Curl_dynhds_del_opt(struct dynhds *dynhds, int opt);
 
 /**
  * Return the n-th header entry or NULL if it does not exist.
@@ -99,7 +103,7 @@ struct dynhds_entry *Curl_dynhds_cget(struct dynhds *dynhds, const char *name);
 /* used by unit2602.c */
 
 /**
- * Return TRUE iff one or more headers with the given name exist.
+ * Return TRUE if one or more headers with the given name exist.
  */
 bool Curl_dynhds_contains(struct dynhds *dynhds,
                           const char *name, size_t namelen);

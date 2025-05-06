@@ -185,6 +185,7 @@ LIB_CFILES =         \
   idn.c              \
   if2ip.c            \
   imap.c             \
+  impersonate.c      \
   inet_ntop.c        \
   inet_pton.c        \
   krb5.c             \
